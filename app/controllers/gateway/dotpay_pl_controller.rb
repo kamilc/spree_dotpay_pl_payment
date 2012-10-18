@@ -20,7 +20,8 @@ class Gateway::DotpayPlController < Spree::BaseController
   
   # redirecting from dotpay.pl
   def complete    
-    @order = Order.find_by_number(params[:format])
+    @order = Order.find_by_number(params[:control])
+    dotpay_pl_payment_success(params)
     session[:order_id]=nil
     if @order.state=="complete"
       redirect_to order_url(@order, {:checkout_complete => true, :order_token => @order.token}), :notice => I18n.t("payment_success")
