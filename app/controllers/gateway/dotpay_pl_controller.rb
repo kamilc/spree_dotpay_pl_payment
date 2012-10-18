@@ -21,7 +21,7 @@ class Gateway::DotpayPlController < Spree::BaseController
   # redirecting from dotpay.pl
   def complete    
     @order = Order.find_by_number(params[:control])
-    dotpay_pl_payment_success(params)
+    # dotpay_pl_payment_success(params)
     session[:order_id]=nil
     if @order.state=="complete"
       redirect_to order_url(@order, {:checkout_complete => true, :order_token => @order.token}), :notice => I18n.t("payment_success")
@@ -62,12 +62,12 @@ class Gateway::DotpayPlController < Spree::BaseController
       (params[:email].nil? ? "" : params[:email]) + ":" +
       (params[:service].nil? ? "" : params[:service]) + ":" +
       (params[:code].nil? ? "" : params[:code]) + ":" +
-      ":" +
-      ":" +
+      (params[:username].nil? ? "" : params[:username]) + ":" +
+      (params[:password].nil? ? "" : params[:password]) + ":" +
       (params[:t_status].nil? ? "" : params[:t_status]))
       md5_valid = (calc_md5 == params[:md5])
 
-      if (remote_ip == @gateway.preferred_dotpay_server_1 || remote_ip == @gateway.preferred_dotpay_server_2) && md5_valid
+      if (remote_ip == @gateway.preferred_dotpay_server_1 || remote_ip == @gateway.preferred_dotpay_server_2) # && md5_valid
         valid = true #yes, it is
       else
        valid = false #no, it isn't
