@@ -20,8 +20,7 @@ class Gateway::DotpayPlController < Spree::BaseController
   
   # redirecting from dotpay.pl
   def complete    
-    @order = Order.find_by_number(params[:control])
-    # dotpay_pl_payment_success(params)
+    @order = Order.find session[:order_id]
     session[:order_id]=nil
     if @order.state=="complete"
       redirect_to order_url(@order, {:checkout_complete => true, :order_token => @order.token}), :notice => I18n.t("payment_success")
@@ -35,8 +34,12 @@ class Gateway::DotpayPlController < Spree::BaseController
     @order = Order.find_by_number(params[:control])
     @gateway = @order && @order.payments.first.payment_method
 
+    Rails.logger.info params
+
     if dotpay_pl_validate(@gateway, params, request.remote_ip)
+      Rails.logger.info "Seems valid.."
       if params[:t_status]=="2" # dotpay state for payment confirmed
+        Rails.logger.info "Success!"
         dotpay_pl_payment_success(params)
       elsif params[:t_status] == "4" or params[:t_status] == "5" #dotpay states for cancellation and so on
         dotpay_pl_payment_cancel(params)
@@ -45,6 +48,7 @@ class Gateway::DotpayPlController < Spree::BaseController
       end
       render :text => "OK"
     else
+      Rails.logger.info "Not valid"
       render :text => "Not valid"
     end    
   end
@@ -66,6 +70,10 @@ class Gateway::DotpayPlController < Spree::BaseController
       (params[:password].nil? ? "" : params[:password]) + ":" +
       (params[:t_status].nil? ? "" : params[:t_status]))
       md5_valid = (calc_md5 == params[:md5])
+
+      Rails.logger.info "Remote ip = #{remote_ip}"
+      Rails.logger.info "@gateway.preferred_dotpay_server_1 = #{@gateway.preferred_dotpay_server_1}"
+      Rails.logger.info "@gateway.preferred_dotpay_server_2 = #{@gateway.preferred_dotpay_server_2}"
 
       if (remote_ip == @gateway.preferred_dotpay_server_1 || remote_ip == @gateway.preferred_dotpay_server_2) # && md5_valid
         valid = true #yes, it is
